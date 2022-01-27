@@ -27,9 +27,12 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG')
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = ['*']
+
+
+AUTH_USER_MODEL = 'user.CustomUser'
 
 
 # Application definition
@@ -41,6 +44,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # ? 3rd party
+    'rest_framework',
+
+    # ? local
+    'core',
+    'user',
 ]
 
 MIDDLEWARE = [
