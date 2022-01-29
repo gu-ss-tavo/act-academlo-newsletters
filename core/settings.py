@@ -31,7 +31,6 @@ DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = ['*']
 
-
 AUTH_USER_MODEL = 'user.CustomUser'
 
 
@@ -50,8 +49,9 @@ INSTALLED_APPS = [
 
     # ? local
     'core',
-    'user',
-    'tag',
+    'user.apps.UserConfig',
+    'tag.apps.TagConfig',
+    'newsletter.apps.NewsletterConfig',
 ]
 
 MIDDLEWARE = [
@@ -133,6 +133,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
+MEDIA_URL = '/uploads/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
