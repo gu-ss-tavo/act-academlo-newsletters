@@ -2,13 +2,11 @@ from rest_framework import serializers
 
 from .models import Newsletter
 
-from user.serializers import CustomUserSerializer
-
 class NewsletterSerializer(serializers.ModelSerializer):
-    votes = CustomUserSerializer(read_only=True, many=True)
+    vote_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Newsletter
-        fields = ('id', 'name', 'description', 'image', 'body', 'meta', 'votes', 'created_at')
+        fields = ('id', 'name', 'description', 'image', 'body', 'meta', 'vote_count', 'created_at')
 
 class VoteNewsletterSerializer(serializers.Serializer):
     vote = serializers.CharField(max_length=6)

@@ -1,6 +1,8 @@
-from rest_framework import serializers, viewsets, mixins, status
-from rest_framework.decorators import action
+from rest_framework import permissions, serializers, viewsets, mixins, status
+from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
+
+from newsletter.permissions import IsActionForUser
 
 from .serializers import NewsletterSerializer, UserNewsletterSerializer, VoteNewsletterSerializer
 from .models import Newsletter
@@ -17,7 +19,7 @@ class NewsletterViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.R
     * @action 'tags'
     --- espacio donde se muestran las tags asociadas al 'newsletter'
     '''
-    @action(detail=True, methods=['GET'])
+    @action(detail=True, methods=['GET'], permission_classes=[IsActionForUser,])
     def tags(self, request, pk=None):
         tags = self.get_object().tags
         serialized = TagSerializer(tags, many=True)
@@ -35,7 +37,7 @@ class NewsletterViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.R
     --- espacio para actualizar el estado de nuestra suscripción
     --- entrada: BooleanField
     '''
-    @action(detail=True, methods=['GET', 'POST'], serializer_class=UserNewsletterSerializer)
+    @action(detail=True, methods=['GET', 'POST'], serializer_class=UserNewsletterSerializer, permission_classes=[IsActionForUser,])
     def subscribed_users(self, request, pk=None):
         obj = self.get_object()
         vote_count = (obj.votes).all().count()
@@ -43,17 +45,25 @@ class NewsletterViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.R
             new_status = request.data.get('status').__str__().lower() == 'true'
             is_different = new_status != (request.user in list((obj.users).all()))
 
-            if vote_count >= obj.meta and is_different:
-                users = (obj.users).all()
-                users = list(users)
+            if vote_count >= obj.meta:
+                if is_different:
+                    users = (obj.users).all()
+                    users = list(users)
 
-                if new_status:
-                    users.append(request.user)
-                else:
-                    users.remove(request.user)
+                    if new_status:
+                        users.append(request.user)
+                    else:
+                        users.remove(request.user)
 
-                obj.users.set(users)
-                obj.save()
+                    obj.users.set(users)
+                    obj.save()
+            else:
+                return Response(status=status.HTTP_406_NOT_ACCEPTABLE,
+                                data={
+                                    'message': f'The voting target has not yet been achieved: {vote_count}/{obj.meta}',
+                                    'vote_count': vote_count,
+                                    'vote_meta': obj.meta
+                                })
 
         users = self.get_object().users
         serialized = CustomUserSerializer(users, many=True)
@@ -72,7 +82,7 @@ class NewsletterViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.R
     --- --- @param: 'ok'
     --- --- @param: 'remove'
     '''
-    @action(detail=True, methods=['GET', 'POST'], serializer_class=VoteNewsletterSerializer)
+    @action(detail=True, methods=['GET', 'POST'], serializer_class=VoteNewsletterSerializer, permission_classes=[IsActionForUser,])
     def vote(self, request, pk=None):
         obj = self.get_object()
 
@@ -97,14 +107,16 @@ class NewsletterViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.R
 
                     raise serializers.ValidationError(detail='\'ok\' needed to confirm your vote', code='negation')
 
-                obj.votes.set(user_vote)
-                obj.save()
-
                 message = None
                 if option == 'ok':
                     message = 'Thanks for voting'
+                    obj.vote_count = obj.vote_count + 1
                 elif option == 'remove':
                     message = 'Elliminate vote'
+                    obj.vote_count = obj.vote_count - 1
+
+                obj.votes.set(user_vote)
+                obj.save()
 
                 if message:
                     return Response(status=status.HTTP_202_ACCEPTED,

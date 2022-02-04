@@ -14,6 +14,7 @@ class Newsletter(models.Model):
 
     meta = models.BigIntegerField(default=0)
     votes = models.ManyToManyField(CustomUser, blank=True, related_name='votes')
+    vote_count = models.IntegerField(default=0)
 
     users = models.ManyToManyField(CustomUser, blank=True, related_name='users')
     tags = models.ManyToManyField(Tag, blank=True)
