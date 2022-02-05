@@ -1,7 +1,8 @@
 from rest_framework import status, viewsets, mixins
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from newsletter.models import Newsletter
 
 from .models import CustomUser
@@ -11,11 +12,6 @@ from .serializers import CustomUserSerializer, NewsletterUsersSerializer
 class RegisterUserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     serializer_class = CustomUserSerializer
     model = CustomUser
-
-    @action(detail=False, methods=['POST'])
-    def superuser(self, request):
-        if request.method == 'POST':
-            pass
 
 class CustomUserViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated,]

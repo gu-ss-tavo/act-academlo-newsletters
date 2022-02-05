@@ -1,5 +1,5 @@
-from rest_framework import permissions, serializers, viewsets, mixins, status
-from rest_framework.decorators import action, permission_classes
+from rest_framework import serializers, viewsets, mixins, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from newsletter.permissions import IsActionForUser
